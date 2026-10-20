@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="zh" data-theme="dark" style="color-scheme: dark;"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>篮球比分与积分榜</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#0f1729;--card:#18223a;--text:#f2f4f8;--muted:#9aa6bf;--accent:#ff7a1a;--line:#2a3654;--win:#3ddc97;color-scheme:dark}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f4f6fa;--card:#fff;--text:#14203a;--muted:#5b6784;--line:#dde2ee;--win:#12805a;color-scheme:light}}
+:root[data-theme="dark"]{--bg:#0f1729;--card:#18223a;--text:#f2f4f8;--muted:#9aa6bf;--line:#2a3654;--win:#3ddc97;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+main{max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:8px 0 14px}h1 span{color:var(--accent)}
+h2{font-size:16px;margin:20px 0 8px;color:var(--muted)}
+.tabs{display:flex;gap:8px;margin-bottom:12px}
+.tabs button,.btn{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 14px;font:inherit;cursor:pointer}
+.tabs button.on,.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.sm{padding:4px 10px;font-size:14px}
+.wrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:480px}
+th,td{padding:10px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--muted);font-size:13px;font-weight:600}
+td:nth-child(2),th:nth-child(2){text-align:left}
+tr:last-child td{border-bottom:0}
+.rank{color:var(--accent);font-weight:700}
+.m{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.score{font-size:24px;font-weight:800}.w{color:var(--win)}
+.meta{color:var(--muted);font-size:13px}
+.tag{font-size:12px;border:1px solid var(--line);border-radius:99px;padding:1px 8px;color:var(--muted)}
+.empty{color:var(--muted);text-align:center;padding:28px 8px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:12px}
+.panel .g{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+input,select{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit}
+label{font-size:13px;color:var(--muted);display:block}
+.msg{color:#ff6b6b;min-height:1.4em;font-size:14px;margin-top:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{display:inline-flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:4px 8px}
+.foot{color:var(--muted);font-size:12px;text-align:center;margin:24px 0 8px}
+.warn{background:rgba(255,122,26,.15);border:1px solid var(--accent);color:var(--text);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:14px}
+.warn .btn{margin-left:8px}
+.r1 td{background:rgba(255,200,61,.16)}
+.r2 td{background:rgba(110,160,255,.16)}
+.bdg{font-size:11px;font-weight:700;border-radius:99px;padding:1px 7px;margin-left:6px;color:#111}
+.b1{background:#ffc83d}
+.b2{background:#8fb8ff}
+
+.team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:10px}
+.team-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
+.team-card h3{font-size:16px;margin:0 0 6px;overflow-wrap:anywhere}
+.team-card .btn{margin-top:10px}
+.member{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.member:last-child{border-bottom:0}
+.member-main{min-width:0;overflow-wrap:anywhere}
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:10px}
+.photo-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px;min-width:0}
+.photo-card img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:7px;background:var(--bg)}
+.photo-card .caption{font-size:13px;overflow-wrap:anywhere;margin-top:6px}
+.photo-card .meta{display:block;overflow-wrap:anywhere;margin-top:3px}
+input[type=file]{padding:8px}
+.form-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+@media(max-width:480px){.panel .g{grid-template-columns:1fr}.member{flex-direction:column}.team-grid{grid-template-columns:1fr}}
+
+/* Refined visual system: polished basketball dashboard, with restrained motion. */
+:root{--bg:#0a1020;--card:#121d33;--text:#f4f7ff;--muted:#9baac4;--accent:#ff852e;--line:rgba(151,174,214,.18);--win:#42e0a1;--shadow:0 14px 34px rgba(0,0,0,.18);--surface-glass:rgba(17,28,49,.76)}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0a1020;--card:#121d33;--text:#f4f7ff;--muted:#9baac4;--accent:#ff852e;--line:rgba(151,174,214,.18);--win:#42e0a1;--shadow:0 14px 34px rgba(0,0,0,.18);--surface-glass:rgba(17,28,49,.76)}
+:root[data-theme="light"]{color-scheme:light;--bg:#f3f6fb;--card:#ffffff;--text:#17233a;--muted:#66758e;--accent:#e96815;--line:rgba(41,62,101,.14);--win:#087d56;--shadow:0 12px 30px rgba(26,48,86,.08);--surface-glass:rgba(255,255,255,.82)}
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+body{min-height:100vh;background:radial-gradient(ellipse at 12% 0%,rgba(255,133,46,.11),transparent 35%),radial-gradient(ellipse at 90% 15%,rgba(57,120,226,.09),transparent 30%),var(--bg);transition:background-color .25s,color .25s}
+main{max-width:1080px;padding:24px clamp(14px,3vw,32px) 34px}
+h1{display:flex;align-items:center;gap:8px;font-size:clamp(24px,3vw,34px);font-weight:850;letter-spacing:-.045em;margin:8px 0 6px;line-height:1.2}
+h1 span{color:var(--accent);text-shadow:0 0 28px rgba(255,133,46,.16)}
+.site-controls{display:flex;justify-content:flex-end;gap:8px;margin:4px 0 18px}
+.utility-btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;padding:7px 12px;background:var(--surface-glass);color:var(--muted);font:600 13px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;cursor:pointer;transition:transform .18s,border-color .18s,color .18s,background .18s;backdrop-filter:blur(12px)}
+.utility-icon{font-size:15px;color:var(--accent)}
+.tabs{position:sticky;top:8px;z-index:30;display:flex;gap:5px;overflow-x:auto;padding:6px;margin:0 0 18px;border:1px solid var(--line);border-radius:16px;background:var(--surface-glass);backdrop-filter:blur(18px);box-shadow:var(--shadow);scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:1;min-width:max-content;border:1px solid transparent;border-radius:11px;padding:11px 15px;background:transparent;color:var(--muted);font-weight:700;transition:color .18s,background .18s,transform .18s}
+.tabs button.on{background:linear-gradient(135deg,var(--accent),#ff9c52);color:#fff;border-color:transparent;box-shadow:0 6px 18px rgba(255,117,28,.22)}
+h2{display:flex;align-items:center;gap:8px;color:var(--text);font-size:17px;font-weight:800;letter-spacing:-.02em;margin:25px 0 11px}
+h2:before{content:"";display:inline-block;width:4px;height:17px;flex:none;border-radius:99px;background:var(--accent)}
+.panel,.m,.team-card,.photo-card,.wrap{border:1px solid var(--line);border-radius:16px;box-shadow:0 7px 24px rgba(0,0,0,.055);transition:transform .2s,border-color .2s,box-shadow .2s,background .2s}
+.panel{padding:16px;background:var(--card)}
+.m{padding:15px;margin-bottom:12px;background:var(--card)}
+.team-card{padding:18px;background:linear-gradient(155deg,var(--card),color-mix(in srgb,var(--card) 87%,var(--accent) 13%));}
+.team-card h3{font-size:17px;line-height:1.35}
+.score{font-size:clamp(24px,4vw,32px);font-variant-numeric:tabular-nums;letter-spacing:-.045em}
+.btn{border-radius:10px;padding:9px 14px;font-weight:650;transition:transform .16s,box-shadow .16s,border-color .16s,background .16s;}
+.btn.pri{background:linear-gradient(135deg,var(--accent),#ff9a4f);box-shadow:0 6px 18px rgba(255,117,28,.18)}
+.btn.sm{border-radius:8px}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid rgba(255,133,46,.38);outline-offset:2px}
+input,select{border:1px solid var(--line);border-radius:10px;min-height:42px;padding:10px 12px;transition:border-color .18s,box-shadow .18s,background .18s}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,133,46,.12);outline:none}
+label{font-weight:650;margin-bottom:4px}
+.wrap{overflow-x:auto;background:var(--card)}
+table{min-width:530px}
+th,td{padding:12px 13px;border-bottom:1px solid var(--line)}
+th{background:rgba(130,153,193,.055);letter-spacing:.02em}
+tbody tr,table tr{transition:background .16s}
+table tr:hover td{background:rgba(255,133,46,.045)}
+.tag{border-color:var(--line);background:rgba(130,153,193,.07);padding:3px 9px;font-weight:650}
+.bdg{padding:3px 8px}
+.r1 td{background:rgba(255,200,61,.10)}.r2 td{background:rgba(110,160,255,.09)}
+.search-wrap{position:relative;display:flex;align-items:center;gap:8px;margin:10px 0 14px;padding:7px 10px;border:1px solid var(--line);border-radius:13px;background:var(--card);box-shadow:0 5px 18px rgba(0,0,0,.035)}
+.search-icon{font-size:25px;line-height:1;color:var(--accent)}
+.search-wrap input{flex:1;min-width:0;border:0!important;box-shadow:none!important;background:transparent;min-height:36px;padding:5px 2px}
+.search-hint{flex:none;font-size:11px;color:var(--muted);white-space:nowrap}
+.photo-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:14px}
+.photo-card{padding:9px;background:var(--card);overflow:hidden}
+.photo-card img{cursor:zoom-in;transition:transform .35s cubic-bezier(.2,.7,.2,1),filter .25s}
+.photo-card:hover img{filter:saturate(1.08)}
+.photo-card .caption{font-weight:650}
+.empty{padding:34px 16px;border:1px dashed var(--line);border-radius:14px;background:rgba(120,140,180,.035)}
+.chip{border-radius:10px}
+.msg{color:var(--accent);font-weight:600}
+.warn{border-radius:13px;box-shadow:var(--shadow)}
+.foot{line-height:1.8;margin-top:30px}
+.view-enter{animation:viewRise .34s cubic-bezier(.2,.7,.25,1) both}
+@keyframes viewRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes softPulse{0%,100%{box-shadow:0 6px 18px rgba(255,117,28,.18)}50%{box-shadow:0 8px 23px rgba(255,117,28,.28)}}
+.tabs button.on{animation:softPulse 3.2s ease-in-out infinite}
+.photo-lightbox{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:56px 18px 24px;background:rgba(3,7,17,.91);backdrop-filter:blur(12px);animation:lightboxIn .2s ease-out}
+.photo-lightbox img{max-width:min(94vw,1250px);max-height:78vh;object-fit:contain;border-radius:12px;box-shadow:0 20px 70px rgba(0,0,0,.4);animation:photoIn .25s cubic-bezier(.2,.7,.2,1)}
+.lightbox-close{position:absolute;top:18px;right:20px;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.12);color:#fff;font-size:30px;line-height:1;cursor:pointer}
+.lightbox-caption{color:#fff;text-align:center;font-size:14px;max-width:90vw;overflow-wrap:anywhere}
+@keyframes lightboxIn{from{opacity:0}to{opacity:1}}
+@keyframes photoIn{from{opacity:.5;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+@media(hover:hover){.btn:hover,.utility-btn:hover{transform:translateY(-2px);border-color:rgba(255,133,46,.55);box-shadow:0 8px 22px rgba(0,0,0,.13)}.team-card:hover,.photo-card:hover,.m:hover,.panel:hover{border-color:rgba(255,133,46,.28);box-shadow:var(--shadow)}.team-card:hover{transform:translateY(-3px)}.photo-card:hover{transform:translateY(-2px)}}
+@media(max-width:640px){main{padding:17px 12px 25px}h1{font-size:24px}.site-controls{justify-content:flex-start;margin-bottom:14px}.utility-btn{padding:8px 10px}.tabs{top:4px;border-radius:13px}.tabs button{padding:10px 12px;font-size:14px}.row{gap:7px}.panel{padding:13px}.m{padding:12px}.search-hint{display:none}th,td{padding:10px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+
+/* Simple, action-oriented home dashboard */
+.home-hero{position:relative;overflow:hidden;padding:clamp(20px,4vw,32px);border:1px solid var(--line);border-radius:22px;background:linear-gradient(125deg,rgba(255,133,46,.13),transparent 48%),linear-gradient(145deg,var(--card),color-mix(in srgb,var(--card) 90%,#4269a7 10%));box-shadow:var(--shadow);margin:4px 0 18px}
+.home-eyebrow{font-size:11px;letter-spacing:.16em;font-weight:850;color:var(--accent);text-transform:uppercase}
+.home-title{font-size:clamp(24px,4vw,34px);font-weight:900;letter-spacing:-.045em;margin:7px 0 8px!important;color:var(--text)}
+.home-title:before{display:none}
+.home-subtitle{max-width:620px;margin:0;color:var(--muted);font-size:14px}
+.home-hero-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:20px}
+.home-stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:14px 0 22px}
+.home-stat{min-width:0;padding:15px 14px;border:1px solid var(--line);border-radius:15px;background:var(--card);box-shadow:0 6px 18px rgba(0,0,0,.035)}
+.home-stat-label{font-size:12px;color:var(--muted);font-weight:650}
+.home-stat-value{font-size:clamp(23px,3vw,30px);font-weight:900;line-height:1.2;margin-top:5px;font-variant-numeric:tabular-nums;letter-spacing:-.04em;overflow-wrap:anywhere}
+.home-stat-note{font-size:11px;color:var(--muted);margin-top:5px}
+.home-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:24px 0 11px}
+.home-section-head h2{margin:0}
+.home-section-head h2:before{display:none}
+.home-section-head h2:after{content:"";display:inline-block;width:4px;height:16px;border-radius:99px;background:var(--accent);order:-1;display:none}
+.home-tools{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.home-tool{width:100%;display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:9px;min-height:126px;padding:17px;border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--text);cursor:pointer;font:inherit;transition:transform .18s,border-color .18s,box-shadow .18s}
+.home-tool-icon{display:grid;place-items:center;width:39px;height:39px;border-radius:12px;background:rgba(255,133,46,.12);color:var(--accent);font-size:21px;font-weight:800}
+.home-tool-title{font-weight:800;font-size:14px;line-height:1.35}
+.home-tool-desc{font-size:12px;line-height:1.5;color:var(--muted)}
+.home-columns{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:14px;align-items:start}
+.home-panel{min-width:0;padding:16px;border:1px solid var(--line);border-radius:17px;background:var(--card)}
+.home-match{display:block;width:100%;padding:13px 0;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--text);text-align:left;cursor:pointer;font:inherit}
+.home-match:last-child{border-bottom:0;padding-bottom:2px}
+.home-match-line{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:9px;align-items:center}
+.home-team-name{min-width:0;overflow-wrap:anywhere;font-size:13px;font-weight:750}
+.home-team-name:last-child{text-align:right}
+.home-match-score{font-size:19px;font-weight:900;letter-spacing:-.04em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.home-match-meta{display:flex;justify-content:space-between;gap:8px;margin-top:6px;color:var(--muted);font-size:11px}
+.home-info-list{display:grid;gap:9px}
+.home-info-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(130,153,193,.035)}
+.home-info-row span:first-child{font-size:13px;font-weight:700}
+.home-info-row span:last-child{font-size:12px;color:var(--muted);text-align:right}
+.home-footer-hint{margin:16px 0 0;font-size:12px;color:var(--muted)}
+@media(max-width:850px){.home-stats{grid-template-columns:repeat(3,minmax(0,1fr))}.home-tools{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.home-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.home-stat{padding:12px}.home-columns{grid-template-columns:1fr}.home-tools{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.home-tool{min-height:118px;padding:13px}.home-hero{border-radius:17px}.home-hero-actions .btn{flex:1}}
+
+</style>
+</head>
+<body>
+<main>
+<h1>🏀 篮球<span>比分</span>与积分榜</h1>
+<div class="site-controls" aria-label="网站快捷操作">
+  <button class="utility-btn" data-act="toggle-theme" type="button" aria-label="切换明暗主题"><span class="utility-icon" id="theme-icon">☀</span><span id="theme-label">浅色模式</span></button>
+  <button class="utility-btn" data-act="back-top" type="button" aria-label="回到页面顶部"><span class="utility-icon">↑</span><span>回到顶部</span></button>
+</div>
+<div class="tabs"><button data-act="tab" data-v="home" class="on">首页</button><button data-act="tab" data-v="table">积分榜</button><button data-act="tab" data-v="games">比赛结果</button><button data-act="tab" data-v="history">历史对战</button><button data-act="tab" data-v="teams">球队与球员</button></div>
+<div id="warn"></div>
+<div class="meta" style="margin:0 0 10px">录入比赛、球员和照片的入口已开放；如果当前环境没有发布权限，数据将保存在此浏览器。</div>
+<div id="app"></div>
+<p class="foot">积分榜只统计「已结束」的比赛，小组榜只算同组球队之间的比赛 · 排名：胜率 → 分差 → 总得分<br>🟡 正盟＝小组第一 · 🔵 副盟＝小组第二（至少打过一场才标记）</p>
+</main>
+<script type="application/json" id="data">{"teams":[{"id":"1orrtxs","name":"KSRM(A)","g":"A组"},{"id":"5b52ezf","name":"光明（GNES UNION)","g":"A组"},{"id":"2erhifj","name":"古来宽中","g":"A组"},{"id":"43mfrqy","name":"新港","g":"A组"},{"id":"aaw18ex","name":"灰狼（SATEERA)","g":"B组"},{"id":"4cwhi73","name":"KSRM(C)","g":"B组"},{"id":"hgd978m","name":"沙威篮协","g":"B组"},{"id":"s8h2b8g","name":"古来宽联","g":"C组"},{"id":"qig72h7","name":"KSRM(B)","g":"C组"},{"id":"327yh1p","name":"灰狼（志气）","g":"C组"},{"id":"qwyce2h","name":"光明（GNES DYNASTY)","g":"B组"}],"matches":[{"id":"3yk317w","home":"2erhifj","away":"5b52ezf","hs":70,"as":38,"status":"done","date":"2026-10-16","venue":"KBA"},{"id":"os8xsdl","home":"4cwhi73","away":"hgd978m","hs":67,"as":45,"status":"done","date":"2026-10-16","venue":"KBA"},{"id":"hx9brcl","home":"43mfrqy","away":"2erhifj","hs":37,"as":79,"status":"done","date":"2026-10-17","venue":"KBA"},{"id":"kyia2ni","home":"327yh1p","away":"s8h2b8g","hs":29,"as":114,"status":"done","date":"2026-10-17","venue":"KBA"},{"id":"s3qsvvc","home":"5b52ezf","away":"1orrtxs","hs":37,"as":148,"status":"done","date":"2026-10-17","venue":"KBA"},{"id":"q71xcuq","home":"qwyce2h","away":"4cwhi73","hs":72,"as":70,"status":"done","date":"2026-10-18","venue":"KBA"},{"id":"h29091y","home":"1orrtxs","away":"43mfrqy","hs":103,"as":30,"status":"done","date":"2026-10-18","venue":"KBA"},{"id":"6n226n5","home":"hgd978m","away":"aaw18ex","hs":38,"as":86,"status":"done","date":"2026-10-18","venue":"KBA"}]}</script>
+<script>
+(function(){
+var S=JSON.parse(document.getElementById('data').textContent);
+S.teams=S.teams||[];S.matches=S.matches||[];S.players=Array.isArray(S.players)?S.players:[];S.teams.forEach(function(t){if(!Array.isArray(t.photos))t.photos=[];});
+var art=null,canEdit=true,canPublish=false,tab='home',editId=null,armed=null,err='',h2hA='',h2hB='',selectedTeamId='',playerEditId='',armedPlayer=null,armedPhoto=null;
+var LOCAL_DATA_KEY='basketball_scoreboard_local_backup_v1';
+try{var localSaved=localStorage.getItem(LOCAL_DATA_KEY);if(localSaved){var localObj=JSON.parse(localSaved);if(localObj&&Array.isArray(localObj.teams)&&Array.isArray(localObj.matches)){S=localObj;S.players=Array.isArray(S.players)?S.players:[];S.teams.forEach(function(t){if(!Array.isArray(t.photos))t.photos=[];});}}}catch(localLoadError){}
+var ST={scheduled:'未开始',done:'已结束',cancelled:'取消'};
+function $(s){return document.querySelector(s)}
+function esc(s){var d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML}
+function uid(){return Math.random().toString(36).slice(2,9)}
+function tn(id){var t=S.teams.filter(function(x){return x.id===id})[0];return t?t.name:'?'}
+function standings(gk){
+  var m={};S.teams.forEach(function(t){if((t.g||'')!==gk)return;m[t.id]={n:t.name,g:0,w:0,l:0,pf:0,pa:0}});
+  S.matches.forEach(function(x){
+    if(x.status!=='done')return;var h=m[x.home],a=m[x.away];if(!h||!a)return;
+    h.g++;a.g++;h.pf+=x.hs;h.pa+=x.as;a.pf+=x.as;a.pa+=x.hs;
+    if(x.hs>x.as){h.w++;a.l++}else{a.w++;h.l++}
+  });
+  var r=Object.keys(m).map(function(k){return m[k]});
+  r.sort(function(a,b){return (b.g?b.w/b.g:0)-(a.g?a.w/a.g:0)||(b.pf-b.pa)-(a.pf-a.pa)||b.pf-a.pf||a.n.localeCompare(b.n)});
+  return r;
+}
+function tableOne(r){
+  var h='<div class="wrap"><table><tr><th>#</th><th>球队</th><th>赛</th><th>胜</th><th>负</th><th>得分</th><th>失分</th><th>分差</th><th>胜率</th></tr>';
+  r.forEach(function(x,i){
+    var d=x.pf-x.pa;
+    h+='<tr class="'+(x.g&&i===0?'r1':x.g&&i===1?'r2':'')+'"><td class="rank">'+(i+1)+'</td><td>'+esc(x.n)+(x.g&&i<2?'<span class="bdg b'+(i+1)+'">'+(i?'副盟':'正盟')+'</span>':'')+'</td><td>'+x.g+'</td><td>'+x.w+'</td><td>'+x.l+'</td><td>'+x.pf+'</td><td>'+x.pa+'</td><td>'+(d>0?'+':'')+d+'</td><td>'+(x.g?(x.w/x.g*100).toFixed(1)+'%':'—')+'</td></tr>';
+  });
+  return h+'</table></div>';
+}
+function gnames(){return S.groups||['A组','B组','C组']}
+function gopts(sel){return '<option value="">未分组</option>'+gnames().map(function(g){return '<option value="'+esc(g)+'"'+(g===sel?' selected':'')+'>'+esc(g)+'</option>'}).join('')}
+function tg(id){var t=S.teams.filter(function(x){return x.id===id})[0];return t&&t.g||''}
+function gtag(x){var a=tg(x.home);return a&&a===tg(x.away)?'<span class="tag" style="color:var(--accent);margin-right:4px">'+esc(a)+'</span>':''}
+function homeView(){
+  var completed=S.matches.filter(function(m){return m.status==='done';});
+  var upcoming=S.matches.filter(function(m){return m.status==='scheduled';});
+  var playerCount=(S.players||[]).length;
+  var photoCount=S.teams.reduce(function(n,t){return n+(Array.isArray(t.photos)?t.photos.length:0);},0);
+  var recent=completed.slice().sort(function(a,b){var ad=a.date||'',bd=b.date||'';if(ad!==bd){if(!ad)return 1;if(!bd)return -1;return bd.localeCompare(ad);}return String(b.id||'').localeCompare(String(a.id||''));}).slice(0,4);
+  var h='<section class="home-hero"><div class="home-eyebrow">BASKETBALL · TEAM & MATCH CENTER</div><h2 class="home-title">赛事中心</h2><p class="home-subtitle">从一个首页管理比赛、积分榜、历史对战、球队名单和比赛照片。选择下方功能即可快速开始。</p><div class="home-hero-actions"><button class="btn pri" data-act="home-add-match">＋ 录入比赛结果</button><button class="btn" data-act="home-open-teams">管理球队 / 球员</button></div></section>';
+  h+='<section class="home-stats" aria-label="赛事数据总览">';
+  h+='<div class="home-stat"><div class="home-stat-label">球队总数</div><div class="home-stat-value">'+S.teams.length+'</div><div class="home-stat-note">全部注册球队</div></div>';
+  h+='<div class="home-stat"><div class="home-stat-label">已结束比赛</div><div class="home-stat-value">'+completed.length+'</div><div class="home-stat-note">纳入战绩统计</div></div>';
+  h+='<div class="home-stat"><div class="home-stat-label">待进行比赛</div><div class="home-stat-value">'+upcoming.length+'</div><div class="home-stat-note">尚未开始</div></div>';
+  h+='<div class="home-stat"><div class="home-stat-label">球员总数</div><div class="home-stat-value">'+playerCount+'</div><div class="home-stat-note">所有球队合计</div></div>';
+  h+='<div class="home-stat"><div class="home-stat-label">比赛照片</div><div class="home-stat-value">'+photoCount+'</div><div class="home-stat-note">所有球队相册合计</div></div></section>';
+  h+='<div class="home-section-head"><h2>快速进入功能</h2><span class="meta">常用操作</span></div><section class="home-tools">';
+  h+='<button class="home-tool" data-act="home-add-match"><span class="home-tool-icon">＋</span><span class="home-tool-title">比赛结果</span><span class="home-tool-desc">录入、修改和管理比分</span></button>';
+  h+='<button class="home-tool" data-act="tab" data-v="table"><span class="home-tool-icon">▤</span><span class="home-tool-title">积分榜</span><span class="home-tool-desc">查看小组排名、胜率与分差</span></button>';
+  h+='<button class="home-tool" data-act="tab" data-v="history"><span class="home-tool-icon">↔</span><span class="home-tool-title">历史对战</span><span class="home-tool-desc">比较两队交手结果和累计得分</span></button>';
+  h+='<button class="home-tool" data-act="home-open-teams"><span class="home-tool-icon">♟</span><span class="home-tool-title">球队与球员</span><span class="home-tool-desc">维护球队资料、球员名单和球衣号码</span></button>';
+  h+='<button class="home-tool" data-act="home-open-teams"><span class="home-tool-icon">▧</span><span class="home-tool-title">比赛照片</span><span class="home-tool-desc">进入球队相册，上传、查看和管理照片</span></button>';
+  h+='<button class="home-tool" data-act="tab" data-v="games"><span class="home-tool-icon">☷</span><span class="home-tool-title">全部比赛记录</span><span class="home-tool-desc">搜索球队、日期与比赛地点</span></button>';
+  h+='</section>';
+  h+='<div class="home-columns"><section><div class="home-section-head"><h2>最近比赛结果</h2><button class="btn sm" data-act="tab" data-v="games">查看全部</button></div><div class="home-panel">';
+  if(!recent.length)h+='<div class="empty">目前还没有已结束的比赛。</div>';
+  else recent.forEach(function(m){var homeName=tn(m.home),awayName=tn(m.away),homeWin=m.hs>m.as,awayWin=m.as>m.hs;
+    h+='<button class="home-match" data-act="tab" data-v="games"><div class="home-match-line"><span class="home-team-name '+(homeWin?'w':'')+'">'+esc(homeName)+'</span><span class="home-match-score">'+(m.hs==null?'—':m.hs)+' : '+(m.as==null?'—':m.as)+'</span><span class="home-team-name '+(awayWin?'w':'')+'">'+esc(awayName)+'</span></div><span class="home-match-meta"><span>'+esc(m.date||'日期未知')+(m.venue?' · '+esc(m.venue):'')+'</span><span>已结束 ↗</span></span></button>';
+  });
+  h+='</div></section><section><div class="home-section-head"><h2>操作指引</h2></div><div class="home-panel"><div class="home-info-list">';
+  h+='<div class="home-info-row"><span>① 录入比赛</span><span>比赛结果 → 选择球队并填比分</span></div>';
+  h+='<div class="home-info-row"><span>② 添加球员</span><span>球队与球员 → 选择球队</span></div>';
+  h+='<div class="home-info-row"><span>③ 上传照片</span><span>进入球队页面 → 上传比赛照片</span></div>';
+  h+='<div class="home-info-row"><span>④ 查询交手</span><span>历史对战 → 选择两支球队</span></div>';
+  h+='<div class="home-info-row"><span>⑤ 查看排名</span><span>积分榜 → 按小组查看</span></div>';
+  h+='</div><p class="home-footer-hint">新增的比赛、球员和照片会按网站当前的保存机制保存。普通浏览器模式的数据仅保存在该浏览器中。</p></div></section></div>';
+  return h;
+}
+
+function tableView(){
+  if(!S.teams.length)return '<div class="empty">还没有球队，请先到「比赛结果」页面添加球队。</div>';
+  var ks=gnames().slice();if(S.teams.some(function(t){return !t.g}))ks.push('');
+  return ks.map(function(k){var r=standings(k);return '<h2>'+esc(k||'未分组')+'</h2>'+(r.length?tableOne(r):'<div class="empty">这个小组还没有球队。</div>')}).join('');
+}
+function gamesView(){
+  var h='<div class="row" style="margin:8px 0 10px"><h2 style="margin:0">比赛管理</h2><button class="btn pri" data-act="scroll-match-entry">＋ 录入比赛结果</button></div>';
+  h+='<div id="match-entry-panel">'+adminView()+'</div><h2>比赛记录</h2>';
+  h+='<div class="search-wrap"><span class="search-icon">⌕</span><input id="match-search" type="search" placeholder="搜索球队、日期或比赛地点…" aria-label="搜索比赛记录"><span class="search-hint">可即时筛选</span></div>';
+  var ms=S.matches.slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'')||String(b.id||'').localeCompare(String(a.id||''));});
+  if(!ms.length)h+='<div class="empty">还没有比赛记录。</div>';
+  ms.forEach(function(x){
+    var done=x.status==='done';
+    h+='<div class="m match-record"><div class="row"><div><b class="'+(done&&x.hs>x.as?'w':'')+'">'+esc(tn(x.home))+'</b></div><div class="score">'+(done?x.hs+' : '+x.as:'vs')+'</div><div style="text-align:right"><b class="'+(done&&x.as>x.hs?'w':'')+'">'+esc(tn(x.away))+'</b></div></div>';
+    h+='<div class="row" style="margin-top:6px"><span class="meta">'+esc(x.date||'')+(x.venue?' · '+esc(x.venue):'')+'</span><span>'+gtag(x)+'<span class="tag">'+(ST[x.status]||'未知状态')+'</span></span></div>';
+    h+='<div class="row" style="margin-top:8px;justify-content:flex-end"><button class="btn sm" data-act="edit" data-id="'+esc(x.id)+'">编辑</button><button class="btn sm" data-act="delm" data-id="'+esc(x.id)+'">'+(armed===x.id?'确认删除？':'删除')+'</button></div>';
+    h+='</div>';
+  });
+  return h;
+}
+function opts(sel){return '<option value="">选择球队</option>'+S.teams.map(function(t){return '<option value="'+t.id+'"'+(t.id===sel?' selected':'')+'>'+esc(t.name)+'</option>'}).join('')}
+
+function historyView(){
+  if(!S.teams.length)return '<div class="empty">还没有球队，先添加球队后即可查询历史对战。</div>';
+  if(!h2hA || !S.teams.some(function(t){return t.id===h2hA;}))h2hA=S.teams[0].id;
+  if(!h2hB || !S.teams.some(function(t){return t.id===h2hB;}) || h2hB===h2hA)
+    h2hB=(S.teams.filter(function(t){return t.id!==h2hA;})[0]||{}).id||'';
+  var h='<h2>球队历史对战</h2><div class="panel"><div class="g">';
+  h+='<div><label>球队 A</label><select id="h2ha">'+S.teams.map(function(t){return '<option value="'+esc(t.id)+'"'+(t.id===h2hA?' selected':'')+'>'+esc(t.name)+'</option>';}).join('')+'</select></div>';
+  h+='<div><label>球队 B</label><select id="h2hb">'+S.teams.map(function(t){return '<option value="'+esc(t.id)+'"'+(t.id===h2hB?' selected':'')+'>'+esc(t.name)+'</option>';}).join('')+'</select></div>';
+  h+='</div><div class="row" style="margin-top:10px"><button class="btn sm" data-act="swap-h2h">交换球队</button><span class="meta">只统计已结束的有效比赛</span></div></div>';
+  if(!h2hB || h2hA===h2hB)return h+'<div class="empty">请选择两支不同的球队。</div>';
+  var A=S.teams.filter(function(t){return t.id===h2hA;})[0],B=S.teams.filter(function(t){return t.id===h2hB;})[0];
+  var ms=S.matches.filter(function(x){return x.status==='done'&&((x.home===h2hA&&x.away===h2hB)||(x.home===h2hB&&x.away===h2hA))&&Number.isInteger(x.hs)&&Number.isInteger(x.as)&&x.hs>=0&&x.as>=0&&x.hs!==x.as;});
+  ms.sort(function(a,b){var ad=a.date||'',bd=b.date||'';if(ad!==bd){if(!ad)return 1;if(!bd)return -1;return bd.localeCompare(ad);}return String(b.id||'').localeCompare(String(a.id||''));});
+  var aw=0,bw=0,ap=0,bp=0;
+  ms.forEach(function(x){var asA=x.home===h2hA?x.hs:x.as,asB=x.home===h2hB?x.hs:x.as;ap+=asA;bp+=asB;if(asA>asB)aw++;else bw++;});
+  var total=ms.length,ar=total?(aw/total*100).toFixed(1)+'%':'—',br=total?(bw/total*100).toFixed(1)+'%':'—',diff=ap-bp;
+  h+='<div class="panel"><div class="row"><b>'+esc(A.name)+'</b><b>'+esc(B.name)+'</b></div>';
+  h+='<div class="row" style="margin:12px 0"><div style="text-align:center;flex:1"><div class="score">'+aw+'</div><div class="meta">胜场 · '+ar+'</div></div><div style="text-align:center;flex:1"><div class="meta">历史交手</div><div class="score">'+total+'</div></div><div style="text-align:center;flex:1"><div class="score">'+bw+'</div><div class="meta">胜场 · '+br+'</div></div></div>';
+  h+='<div class="wrap"><table><tr><th>统计项目</th><th>'+esc(A.name)+'</th><th>'+esc(B.name)+'</th></tr>';
+  h+='<tr><td>总得分</td><td>'+ap+'</td><td>'+bp+'</td></tr><tr><td>总失分</td><td>'+bp+'</td><td>'+ap+'</td></tr>';
+  h+='<tr><td>总分差</td><td>'+(diff>0?'+':'')+diff+'</td><td>'+(diff===0?'0':(diff>0?'-':'')+Math.abs(diff))+'</td></tr><tr><td>胜率</td><td>'+ar+'</td><td>'+br+'</td></tr></table></div>';
+  if(total){var last=ms[0];h+='<p class="meta" style="margin-bottom:0">最近一次交手：'+esc(last.date||'日期未知')+' · '+esc(tn(last.home))+' '+last.hs+' : '+last.as+' '+esc(tn(last.away))+(last.venue?' · '+esc(last.venue):'')+'</p>';}
+  h+='</div><h2>历史交手明细</h2>';
+  if(!total)h+='<div class="empty">这两支球队目前没有已结束的有效交手记录。</div>';
+  else{
+    h+='<div class="meta" style="margin:0 0 8px">最近 '+Math.min(5,total)+' 场（下方列出全部 '+total+' 场）</div>';
+    ms.forEach(function(x){var winner=x.hs>x.as?x.home:x.away;
+      h+='<div class="m"><div class="row"><div style="flex:1"><b class="'+(winner===x.home?'w':'')+'">'+esc(tn(x.home))+'</b></div><div class="score">'+x.hs+' : '+x.as+'</div><div style="flex:1;text-align:right"><b class="'+(winner===x.away?'w':'')+'">'+esc(tn(x.away))+'</b></div></div>';
+      h+='<div class="row" style="margin-top:6px"><span class="meta">'+esc(x.date||'日期未知')+(x.venue?' · '+esc(x.venue):'')+'</span><span class="tag">已结束</span></div></div>';
+    });
+  }
+  h+='<h2>球队对手总览：'+esc(A.name)+'</h2><div class="wrap"><table><tr><th>对手</th><th>场次</th><th>胜</th><th>负</th><th>得分</th><th>失分</th><th>胜率</th></tr>';
+  var opponents={};
+  S.matches.forEach(function(x){
+    if(x.status!=='done'||!Number.isInteger(x.hs)||!Number.isInteger(x.as)||x.hs<0||x.as<0||x.hs===x.as)return;
+    var oid=null,forPts=0,againstPts=0;
+    if(x.home===h2hA){oid=x.away;forPts=x.hs;againstPts=x.as;}
+    else if(x.away===h2hA){oid=x.home;forPts=x.as;againstPts=x.hs;}
+    if(!oid)return;
+    if(!opponents[oid])opponents[oid]={n:tn(oid),g:0,w:0,l:0,pf:0,pa:0};
+    var o=opponents[oid];o.g++;o.pf+=forPts;o.pa+=againstPts;if(forPts>againstPts)o.w++;else o.l++;
+  });
+  var rows=Object.keys(opponents).map(function(k){return opponents[k];});
+  rows.sort(function(a,b){return b.g-a.g||b.w-a.w||a.n.localeCompare(b.n);});
+  if(!rows.length)h+='<tr><td colspan="7">这支球队目前没有已结束的有效比赛。</td></tr>';
+  else rows.forEach(function(o){h+='<tr><td>'+esc(o.n)+'</td><td>'+o.g+'</td><td>'+o.w+'</td><td>'+o.l+'</td><td>'+o.pf+'</td><td>'+o.pa+'</td><td>'+(o.g?(o.w/o.g*100).toFixed(1)+'%':'—')+'</td></tr>';});
+  h+='</table></div>';
+  return h;
+}
+
+function playerForm(teamId){
+  var p=S.players.filter(function(x){return x.id===playerEditId&&x.teamId===teamId;})[0]||{};
+  var editing=!!p.id;
+  var h='<div class="panel"><h3 style="margin:0 0 10px">'+(editing?'编辑球员':'添加球员')+'</h3><div class="g">';
+  h+='<div><label>球员姓名 *</label><input id="pname" maxlength="80" value="'+esc(p.name||'')+'" placeholder="输入球员姓名"></div>';
+  h+='<div><label>球衣号码（可选）</label><input id="pnumber" maxlength="12" value="'+esc(p.number||'')+'" placeholder="例如 23"></div>';
+  h+='<div><label>位置（可选）</label><input id="pposition" maxlength="40" value="'+esc(p.position||'')+'" placeholder="例如 PG / 控球后卫"></div>';
+  h+='<div><label>身高（可选）</label><input id="pheight" maxlength="20" value="'+esc(p.height||'')+'" placeholder="例如 180 cm"></div>';
+  h+='<div><label>年龄（可选）</label><input id="page" type="number" min="0" max="120" step="1" value="'+esc(p.age==null?'':p.age)+'" placeholder="年龄"></div>';
+  h+='<div><label>备注（可选）</label><input id="pnote" maxlength="240" value="'+esc(p.note||'')+'" placeholder="球员简介或备注"></div></div>';
+  h+='<div class="form-actions"><button class="btn pri" data-act="save-player" data-team="'+esc(teamId)+'">'+(editing?'保存修改':'添加球员')+'</button>'+(editing?'<button class="btn" data-act="cancel-player">取消</button>':'')+'</div><div class="msg">'+esc(err)+'</div></div>';
+  return h;
+}
+function teamsView(){
+  if(!S.teams.length)return '<div class="empty">还没有球队，请先在「比赛结果」页面添加球队。</div>';
+  if(!selectedTeamId||!S.teams.some(function(t){return t.id===selectedTeamId;})){
+    selectedTeamId='';var h='<h2>球队页面</h2><p class="meta">选择一支球队，管理球员名单并上传该队的比赛照片。</p><div class="search-wrap"><span class="search-icon">⌕</span><input id="team-search" type="search" placeholder="搜索球队名称或组别…" aria-label="搜索球队"><span class="search-hint">'+S.teams.length+' 支球队</span></div><div class="team-grid">'
+    S.teams.forEach(function(t){var ps=S.players.filter(function(p){return p.teamId===t.id;});var ph=Array.isArray(t.photos)?t.photos.length:0;
+      h+='<div class="team-card"><h3>'+esc(t.name)+'</h3><div class="meta">'+esc(t.g||'未分组')+' · '+ps.length+' 名球员 · '+ph+' 张照片</div><button class="btn pri" data-act="open-team" data-id="'+esc(t.id)+'">进入球队页面</button></div>';
+    });
+    return h+'</div>';
+  }
+  var t=S.teams.filter(function(x){return x.id===selectedTeamId;})[0];
+  if(!Array.isArray(t.photos))t.photos=[];
+  var players=S.players.filter(function(x){return x.teamId===t.id;});
+  var h='<div class="row" style="margin:8px 0 12px"><button class="btn" data-act="back-teams">← 所有球队</button><span class="tag">'+esc(t.g||'未分组')+'</span></div>';
+  h+='<h2 style="font-size:22px;color:var(--text);margin-top:8px">'+esc(t.name)+'</h2>';
+  h+='<div class="panel"><div class="row"><div><b>球队资料</b><div class="meta">球员 '+players.length+' 人 · 比赛照片 '+t.photos.length+' 张</div></div></div></div>';
+  h+='<h2>球员名单</h2>';
+  h+=playerForm(t.id);
+  if(!players.length)h+='<div class="empty">目前没有球员资料。'+'可在上方添加球员。'+'</div>';
+  else{
+    h+='<div class="panel">';
+    players.slice().sort(function(a,b){var an=(a.number||'').toString(),bn=(b.number||'').toString();return an.localeCompare(bn,undefined,{numeric:true})||String(a.name||'').localeCompare(String(b.name||''));}).forEach(function(p){
+      h+='<div class="member"><div class="member-main"><b>'+esc(p.name||'未命名球员')+'</b>';
+      if(p.number)h+=' <span class="tag">#'+esc(p.number)+'</span>';
+      var details=[];if(p.position)details.push(p.position);if(p.height)details.push('身高 '+p.height);if(p.age!==''&&p.age!=null)details.push('年龄 '+p.age);if(details.length)h+='<div class="meta">'+esc(details.join(' · '))+'</div>';
+      if(p.note)h+='<div class="meta">'+esc(p.note)+'</div>';
+      h+='</div>';
+      h+='<div class="form-actions" style="margin-top:0"><button class="btn sm" data-act="edit-player" data-id="'+esc(p.id)+'">编辑</button><button class="btn sm" data-act="delete-player" data-id="'+esc(p.id)+'">'+(armedPlayer===p.id?'确认删除？':'删除')+'</button></div>';
+      h+='</div>';
+    });
+    h+='</div>';
+  }
+  h+='<h2>比赛照片相册</h2>';
+  h+='<div class="panel"><label class="btn pri" for="team-photo-upload" style="display:inline-flex;align-items:center;gap:8px;cursor:pointer">📷 上传比赛照片</label><input id="team-photo-upload" type="file" accept="image/*" multiple style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden" aria-label="选择比赛照片"><div class="meta" style="margin-top:8px">点击按钮选择一张或多张照片。图片会自动压缩后添加到这支球队的相册。</div><label style="margin-top:8px">照片说明（可选，适用于本次上传的所有照片）</label><input id="photo-caption" maxlength="160" placeholder="例如：2026 年联赛对阵古来宽中"><div class="msg">'+esc(err)+'</div></div>';
+  if(!t.photos.length)h+='<div class="empty">这支球队还没有比赛照片。</div>';
+  else{
+    h+='<div class="photo-grid">';
+    t.photos.slice().sort(function(a,b){return String(b.date||'').localeCompare(String(a.date||''))||String(b.id||'').localeCompare(String(a.id||''));}).forEach(function(ph){
+      h+='<div class="photo-card"><img loading="lazy" src="'+esc(ph.dataUrl||'')+'" alt="'+esc(ph.name||'球队比赛照片')+'"><div class="caption">'+esc(ph.caption||ph.name||'比赛照片')+'</div><span class="meta">'+esc(ph.date||'日期未知')+'</span>';
+      h+='<div style="margin-top:7px"><button class="btn sm" data-act="delete-photo" data-id="'+esc(ph.id)+'">'+(armedPhoto===ph.id?'确认删除？':'删除照片')+'</button></div>';
+      h+='</div>';
+    });
+    h+='</div>';
+  }
+  h+='<div class="meta" style="margin-top:12px">提示：球员数量没有人为设定的上限；每名球员都独立关联到这支球队。</div>';
+  return h;
+}
+function compressPhoto(file){
+  return new Promise(function(resolve){
+    if(!file||!/^image\//i.test(file.type)){resolve(null);return;}
+    var reader=new FileReader();
+    reader.onerror=function(){resolve(null);};
+    reader.onload=function(){
+      var img=new Image();
+      img.onerror=function(){resolve(null);};
+      img.onload=function(){
+        try{
+          var max=1400,scale=Math.min(1,max/Math.max(img.naturalWidth||img.width,img.naturalHeight||img.height));
+          var canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round((img.naturalWidth||img.width)*scale));canvas.height=Math.max(1,Math.round((img.naturalHeight||img.height)*scale));
+          var ctx=canvas.getContext('2d');if(!ctx){resolve(null);return;}
+          ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
+          canvas.toBlob(function(blob){
+            if(!blob){resolve(null);return;}
+            var r2=new FileReader();r2.onerror=function(){resolve(null);};r2.onload=function(){resolve({dataUrl:r2.result,name:(file.name||'照片').slice(0,120),size:blob.size});};r2.readAsDataURL(blob);
+          },'image/jpeg',0.76);
+        }catch(e){resolve(null);}
+      };
+      img.src=reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function adminView(){
+  var e=S.matches.filter(function(x){return x.id===editId})[0]||{status:'done'};
+  var h='<h2>球队管理</h2><div class="panel"><div class="row"><input id="tname" placeholder="球队名称" maxlength="40"><select id="tgrp" style="width:auto">'+gopts('')+'</select><button class="btn pri" data-act="addt">添加</button></div><div class="chips">';
+  S.teams.forEach(function(t){h+='<span class="chip">'+esc(t.name)+' <select data-chg="'+t.id+'" style="width:auto;padding:2px 4px">'+gopts(t.g||'')+'</select> <button class="btn sm" data-act="delt" data-id="'+t.id+'">'+(armed===t.id?'确认删除？':'✕')+'</button></span>'});
+  h+='</div></div><h2>'+(e.id?'编辑比赛':'新增比赛')+'</h2><div class="panel"><div class="g">';
+  h+='<div><label>主队</label><select id="mh">'+opts(e.home)+'</select></div><div><label>客队</label><select id="ma">'+opts(e.away)+'</select></div>';
+  h+='<div><label>主队得分</label><input id="mhs" type="number" min="0" step="1" value="'+(e.hs==null?'':e.hs)+'"></div><div><label>客队得分</label><input id="mas" type="number" min="0" step="1" value="'+(e.as==null?'':e.as)+'"></div>';
+  h+='<div><label>日期</label><input id="md" type="date" value="'+esc(e.date||'')+'"></div><div><label>状态</label><select id="ms">'+Object.keys(ST).map(function(k){return '<option value="'+k+'"'+(e.status===k?' selected':'')+'>'+ST[k]+'</option>'}).join('')+'</select></div></div>';
+  h+='<div style="margin-top:8px"><label>地点（可选）</label><input id="mv" maxlength="60" value="'+esc(e.venue||'')+'"></div>';
+  h+='<div class="row" style="margin-top:10px"><button class="btn pri" data-act="savem">保存比赛</button>'+(e.id?'<button class="btn" data-act="cancel">取消编辑</button>':'')+'</div><div class="msg">'+esc(err)+'</div></div>';
+  return h;
+}
+function applyTheme(theme){
+  var light=theme==='light';
+  document.documentElement.setAttribute('data-theme',light?'light':'dark');
+  document.documentElement.style.colorScheme=light?'light':'dark';
+  try{localStorage.setItem('basketball_scoreboard_theme',light?'light':'dark');}catch(e){}
+  var icon=$('#theme-icon'),label=$('#theme-label');
+  if(icon)icon.textContent=light?'☾':'☀';
+  if(label)label.textContent=light?'深色模式':'浅色模式';
+}
+function openPhotoLightbox(src,alt){
+  var old=$('#photo-lightbox');if(old)old.remove();
+  var overlay=document.createElement('div');overlay.id='photo-lightbox';overlay.className='photo-lightbox';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','比赛照片预览');
+  var close=document.createElement('button');close.type='button';close.className='lightbox-close';close.setAttribute('data-lightbox-close','1');close.setAttribute('aria-label','关闭照片预览');close.textContent='×';
+  var img=document.createElement('img');img.src=src;img.alt=alt||'比赛照片';
+  var caption=document.createElement('div');caption.className='lightbox-caption';caption.textContent=alt||'比赛照片';
+  overlay.appendChild(close);overlay.appendChild(img);overlay.appendChild(caption);document.body.appendChild(overlay);
+  close.focus();
+}
+function applySearch(inputId,selector){
+  var field=$('#'+inputId);if(!field)return;
+  var q=field.value.trim().toLocaleLowerCase();
+  document.querySelectorAll(selector).forEach(function(card){card.style.display=!q||card.textContent.toLocaleLowerCase().indexOf(q)!==-1?'':'none';});
+}
+function render(){
+  document.querySelectorAll('.tabs button').forEach(function(b){b.className=b.getAttribute('data-v')===tab?'on':'';b.setAttribute('aria-current',b.getAttribute('data-v')===tab?'page':'false');});
+  $('#app').innerHTML=tab==='home'?homeView():(tab==='table'?tableView():(tab==='history'?historyView():(tab==='teams'?teamsView():gamesView())));
+  var app=$('#app');if(app){app.classList.remove('view-enter');void app.offsetWidth;app.classList.add('view-enter');}
+  var th=document.documentElement.getAttribute('data-theme')||'dark';var ti=$('#theme-icon'),tl=$('#theme-label');if(ti)ti.textContent=th==='light'?'☾':'☀';if(tl)tl.textContent=th==='light'?'深色模式':'浅色模式';
+}
+function save(p){
+  try{sessionStorage.setItem('pend',JSON.stringify(p||null));}catch(e){}
+  if(art&&canPublish){
+    var c=document.documentElement.cloneNode(true);
+    c.querySelector('#app').innerHTML='';
+    c.querySelector('#warn').innerHTML='';
+    c.querySelector('#data').textContent=JSON.stringify(S).replace(/</g,'\\u003c');
+    art.publish('<!doctype html>\n'+c.outerHTML).catch(function(e){
+      var cd=e&&e.code;
+      err=cd==='conflict'?'检测到另一位编辑者同时保存，页面即将刷新，请检查修改是否保留。':'发布保存失败：'+(cd||(e&&e.message)||'未知错误');
+      render();
+    });
+    return;
+  }
+  try{
+    localStorage.setItem(LOCAL_DATA_KEY,JSON.stringify(S));
+    err='已保存到当前浏览器。若要让其他访客也看到这些修改，请在有编辑权限的 Claude Artifact 中发布。';
+  }catch(e){
+    err='保存失败：浏览器本地空间可能已满。请先删除部分照片后再试。';
+  }
+  render();
+}
+function num(id){var v=$(id).value;return v===''?NaN:Number(v)}
+document.addEventListener('click',function(ev){
+  if(ev.target&&ev.target.id==='photo-lightbox'){ev.target.remove();return;}
+  if(ev.target&&ev.target.closest&&ev.target.closest('[data-lightbox-close]')){var lb=$('#photo-lightbox');if(lb)lb.remove();return;}
+  var clickedPhoto=ev.target&&ev.target.closest?ev.target.closest('.photo-card img'):null;if(clickedPhoto){openPhotoLightbox(clickedPhoto.src,clickedPhoto.alt);return;}
+  var b=ev.target.closest('[data-act]');if(!b)return;
+  var a=b.getAttribute('data-act'),id=b.getAttribute('data-id');err='';
+  if(a==='toggle-theme'){applyTheme((document.documentElement.getAttribute('data-theme')||'dark')==='dark'?'light':'dark');return;}
+  if(a==='back-top'){window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});return;}
+  if(a==='tab'){tab=b.getAttribute('data-v');armed=null;render();return}
+  if(a==='home-add-match'){tab='games';armed=null;render();var matchEntry=$('#mhs')||$('#match-entry-panel');if(matchEntry)matchEntry.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});return}
+  if(a==='home-open-teams'){tab='teams';selectedTeamId='';playerEditId='';armedPlayer=null;armedPhoto=null;render();return}
+  if(a==='scroll-match-entry'){var entry=$('#mhs')||$('#match-entry-panel');if(entry)entry.scrollIntoView({behavior:'smooth',block:'center'});return}
+  if(a==='swap-h2h'){var tmp=h2hA;h2hA=h2hB;h2hB=tmp;render();return}
+  if(a==='dismiss'){$('#warn').innerHTML='';return}
+  if(a==='open-team'){selectedTeamId=id;playerEditId='';armedPlayer=null;armedPhoto=null;err='';render();return;}
+  if(a==='back-teams'){selectedTeamId='';playerEditId='';armedPlayer=null;armedPhoto=null;err='';render();return;}
+  if(a==='edit-player'){playerEditId=id;armedPlayer=null;err='';render();var pe=$('#pname');if(pe)pe.scrollIntoView({behavior:'smooth',block:'center'});return;}
+  if(a==='cancel-player'){playerEditId='';err='';render();return;}
+  if(a==='save-player'){
+    var pn=$('#pname').value.trim(),numv=$('#pnumber').value.trim(),pos=$('#pposition').value.trim(),height=$('#pheight').value.trim(),ageRaw=$('#page').value.trim(),note=$('#pnote').value.trim(),teamId=b.getAttribute('data-team');
+    if(!pn){err='请填写球员姓名';render();return;}
+    if(ageRaw!==''&&(!Number.isInteger(Number(ageRaw))||Number(ageRaw)<0||Number(ageRaw)>120)){err='年龄必须是 0 至 120 的整数，或留空';render();return;}
+    var player={id:playerEditId||uid(),teamId:teamId,name:pn,number:numv,position:pos,height:height,age:ageRaw===''?'':Number(ageRaw),note:note};
+    if(playerEditId)S.players=S.players.map(function(x){return x.id===playerEditId?player:x;});else S.players.push(player);
+    var wasEdit=!!playerEditId;playerEditId='';armedPlayer=null;err='';save({k:wasEdit?'edit-player':'add-player',player:player});render();return;
+  }
+  if(a==='delete-player'){
+    if(armedPlayer!==id){armedPlayer=id;render();return;}
+    S.players=S.players.filter(function(x){return x.id!==id;});armedPlayer=null;playerEditId='';save({k:'delete-player',id:id});render();return;
+  }
+  if(a==='delete-photo'){
+    if(armedPhoto!==id){armedPhoto=id;render();return;}
+    var activeTeam=S.teams.filter(function(t){return t.id===selectedTeamId;})[0];
+    if(activeTeam)activeTeam.photos=(activeTeam.photos||[]).filter(function(x){return x.id!==id;});
+    armedPhoto=null;save({k:'delete-photo',teamId:selectedTeamId,id:id});render();return;
+  }
+  if(a==='edit'){editId=id;render();$('#mh').scrollIntoView();return}
+  if(a==='cancel'){editId=null;render();return}
+  if(a==='addt'){
+    var n=$('#tname').value.trim();
+    if(!n){err='请输入球队名称';render();return}
+    if(S.teams.some(function(t){return t.name.toLowerCase()===n.toLowerCase()})){err='已有同名球队';render();return}
+    var gv=$('#tgrp').value,nt={id:uid(),name:n};if(gv)nt.g=gv;S.teams.push(nt);save({k:'addt',name:n});return;
+  }
+  if(a==='delt'){
+    if(S.matches.some(function(m){return m.home===id||m.away===id})){err='该球队已有比赛记录，不能删除';render();return}
+    if((S.players||[]).some(function(p){return p.teamId===id})){err='该球队仍有球员资料，请先删除球员后再删除球队';render();return}
+    var teamToDelete=S.teams.filter(function(t){return t.id===id;})[0];if(teamToDelete&&teamToDelete.photos&&teamToDelete.photos.length){err='该球队仍有比赛照片，请先删除照片后再删除球队';render();return}
+    if(armed!==id){armed=id;render();return}
+    S.teams=S.teams.filter(function(t){return t.id!==id});armed=null;save({k:'delt',id:id});return;
+  }
+  if(a==='delm'){
+    if(armed!==id){armed=id;render();return}
+    S.matches=S.matches.filter(function(m){return m.id!==id});armed=null;save({k:'delm',id:id});return;
+  }
+  if(a==='savem'){
+    var h=$('#mh').value,aw=$('#ma').value,st=$('#ms').value,hs=num('#mhs'),as=num('#mas');
+    if(!h||!aw){err='请选择主队和客队';render();return}
+    if(h===aw){err='主队和客队不能是同一队';render();return}
+    if(st==='done'){
+      if(!Number.isInteger(hs)||!Number.isInteger(as)||hs<0||as<0){err='已结束的比赛需要填写有效的非负整数比分';render();return}
+      if(hs===as){err='篮球比赛不能平局，请检查比分';render();return}
+    }else{hs=Number.isInteger(hs)&&hs>=0?hs:null;as=Number.isInteger(as)&&as>=0?as:null}
+    var rec={id:editId||uid(),home:h,away:aw,hs:hs,as:as,status:st,date:$('#md').value,venue:$('#mv').value.trim()};
+    if(editId)S.matches=S.matches.map(function(m){return m.id===editId?rec:m});else S.matches.push(rec);
+    editId=null;save({k:'savem',rec:rec});
+  }
+});
+document.addEventListener('input',function(ev){
+  if(!ev.target)return;
+  if(ev.target.id==='match-search')applySearch('match-search','.match-record');
+  if(ev.target.id==='team-search')applySearch('team-search','.team-card');
+});
+document.addEventListener('keydown',function(ev){
+  if(ev.key==='Escape'){var lb=$('#photo-lightbox');if(lb)lb.remove();}
+  if(ev.key==='/'&&!/INPUT|TEXTAREA|SELECT/.test((document.activeElement&&document.activeElement.tagName)||'')){
+    var field=tab==='teams'?$('#team-search'):(tab==='games'?$('#match-search'):null);
+    if(field){ev.preventDefault();field.focus();}
+  }
+});
+document.addEventListener('change',async function(ev){
+  var input=ev.target;
+  if(!input||input.id!=='team-photo-upload')return;
+  var t=S.teams.filter(function(x){return x.id===selectedTeamId;})[0];
+  if(!t){err='请先打开球队页面';render();return;}
+  var files=Array.prototype.slice.call(input.files||[]);
+  if(!files.length)return;
+  var caption=($('#photo-caption')?$('#photo-caption').value.trim():'');
+  err='正在压缩照片，请稍候……';render();
+  var done=[],failed=0;
+  for(var i=0;i<files.length;i++){
+    var result=await compressPhoto(files[i]);
+    if(!result){failed++;continue;}
+    done.push({id:uid(),name:result.name,date:new Date().toISOString().slice(0,10),caption:caption,dataUrl:result.dataUrl});
+  }
+  if(!Array.isArray(t.photos))t.photos=[];
+  t.photos=t.photos.concat(done);
+  err=done.length?'已处理 '+done.length+' 张照片'+(failed?'，另有 '+failed+' 张无法读取':'')+'。正在保存……':('没有成功处理照片，请尝试 JPG 或 PNG 图片。');
+  if(done.length){save({k:'add-photos',teamId:t.id,ids:done.map(function(x){return x.id;})});}
+  render();
+});
+document.addEventListener('change',function(ev){
+  if(ev.target && ev.target.id==='h2ha'){h2hA=ev.target.value;if(h2hA===h2hB)h2hB=(S.teams.filter(function(t){return t.id!==h2hA;})[0]||{}).id||'';render();return;}
+  if(ev.target && ev.target.id==='h2hb'){h2hB=ev.target.value;if(h2hA===h2hB)h2hA=(S.teams.filter(function(t){return t.id!==h2hB;})[0]||{}).id||'';render();return;}
+});
+document.addEventListener('change',function(ev){
+  var s=ev.target.closest&&ev.target.closest('[data-chg]');if(!s)return;
+  var id=s.getAttribute('data-chg'),g=s.value;err='';
+  S.teams.forEach(function(t){if(t.id===id){if(g)t.g=g;else delete t.g}});
+  save({k:'tgrp',id:id,g:g});
+});
+function chkPending(){
+  var raw=null;try{raw=sessionStorage.getItem('pend');sessionStorage.removeItem('pend')}catch(e){}
+  if(!raw)return;var p;try{p=JSON.parse(raw)}catch(e){return}
+  if(!p)return;var ok=true,d='';
+  if(p.k==='addt'){d='添加球队「'+p.name+'」';ok=S.teams.some(function(t){return t.name===p.name})}
+  else if(p.k==='tgrp'){d='修改球队小组';ok=S.teams.some(function(t){return t.id===p.id&&(t.g||'')===p.g})}
+  else if(p.k==='delt'){d='删除球队';ok=!S.teams.some(function(t){return t.id===p.id})}
+  else if(p.k==='delm'){d='删除比赛';ok=!S.matches.some(function(m){return m.id===p.id})}
+  else if(p.k==='savem'){var r=p.rec;d='保存比赛（'+(r.date||'无日期')+'）';ok=S.matches.some(function(m){return m.id===r.id&&m.home===r.home&&m.away===r.away&&m.hs===r.hs&&m.as===r.as&&m.status===r.status&&m.date===r.date})}
+  else if(p.k==='add-player'||p.k==='edit-player'){d='保存球员资料';ok=S.players.some(function(x){return x.id===p.player.id&&x.name===p.player.name&&x.teamId===p.player.teamId})}
+  else if(p.k==='delete-player'){d='删除球员';ok=!S.players.some(function(x){return x.id===p.id})}
+  else if(p.k==='delete-photo'){d='删除球队照片';var tt=S.teams.filter(function(t){return t.id===p.teamId;})[0];ok=!tt||(tt.photos||[]).every(function(ph){return ph.id!==p.id})}
+  else if(p.k==='add-photos'){d='保存球队照片';var tt2=S.teams.filter(function(t){return t.id===p.teamId;})[0];ok=!!tt2&&(p.ids||[]).every(function(pid){return (tt2.photos||[]).some(function(ph){return ph.id===pid})})}
+  if(!ok)$('#warn').innerHTML='<div class="warn">⚠️ 你上一次的操作可能没有保存成功：'+esc(d)+'。很可能是另一位编辑者同时保存，覆盖了你的修改。请检查数据，必要时重新输入。<button class="btn sm" data-act="dismiss">知道了</button></div>';
+}
+try{var savedTheme=localStorage.getItem('basketball_scoreboard_theme');if(savedTheme==='light'||savedTheme==='dark')applyTheme(savedTheme);else applyTheme('dark');}catch(e){applyTheme('dark');}
+render();
+chkPending();
+if(window.claude&&claude.use){
+  Promise.all([claude.use('artifact'),claude.use('user')]).then(function(r){
+    art=r[0];var u=r[1];
+    canPublish=!!(art&&u&&u.canEdit&&u.canEdit());
+    render();
+  }).catch(function(){});
+}
+})();
+</script>
+
+
+<span id="PING_CONTENT_PUSH_NOTIFICATION" style="display: none;"></span><span id="PING_CONTENT_PUSH_NOTIFICATION" style="display: none;"></span><span id="PING_CONTENT_PUSH_NOTIFICATION" style="display: none;"></span><span id="PING_CONTENT_PUSH_NOTIFICATION" style="display: none;"></span><span id="PING_CONTENT_PUSH_NOTIFICATION" style="display: none;"></span><span id="PING_CONTENT_PUSH_NOTIFICATION" style="display: none;"></span><span id="PING_CONTENT_PUSH_NOTIFICATION" style="display: none;"></span><span id="PING_CONTENT_PUSH_NOTIFICATION" style="display: none;"></span><span id="PING_CONTENT_PUSH_NOTIFICATION" style="display: none;"></span><span id="PING_CONTENT_PUSH_NOTIFICATION" style="display: none;"></span><span id="PING_CONTENT_PUSH_NOTIFICATION" style="display: none;"></span><span id="PING_CONTENT_PUSH_NOTIFICATION" style="display: none;"></span><span id="PING_CONTENT_PUSH_NOTIFICATION" style="display: none;"></span><span id="PING_CONTENT_PUSH_NOTIFICATION" style="display: none;"></span><span id="PING_CONTENT_PUSH_NOTIFICATION" style="display: none;"></span><span id="PING_CONTENT_PUSH_NOTIFICATION" style="display: none;"></span><span id="PING_CONTENT_PUSH_NOTIFICATION" style="display: none;"></span><span id="PING_CONTENT_PUSH_NOTIFICATION" style="display: none;"></span><span id="PING_CONTENT_PUSH_NOTIFICATION" style="display: none;"></span><span id="PING_CONTENT_PUSH_NOTIFICATION" style="display: none;"></span><span id="PING_CONTENT_PUSH_NOTIFICATION" style="display: none;"></span><span id="PING_CONTENT_PUSH_NOTIFICATION" style="display: none;"></span><span id="PING_CONTENT_PUSH_NOTIFICATION" style="display: none;"></span><span id="PING_CONTENT_PUSH_NOTIFICATION" style="display: none;"></span></body></html>
